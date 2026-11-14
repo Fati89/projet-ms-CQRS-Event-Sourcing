@@ -34,3 +34,6 @@
 ## 3. Streaming des événements en temps réel (SSE)
 ![img_13.png](img_13.png)
 ![img_14.png](img_14.png)
+
+## 4. Axon Server
+![img_15.png](img_15.png)
