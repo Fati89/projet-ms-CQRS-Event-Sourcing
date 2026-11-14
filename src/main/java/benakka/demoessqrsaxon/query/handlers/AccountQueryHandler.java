@@ -5,6 +5,7 @@ import benakka.demoessqrsaxon.query.entities.Account;
 import benakka.demoessqrsaxon.query.entities.AccountOperation;
 import benakka.demoessqrsaxon.query.queries.GetAccountStatementQuery;
 import benakka.demoessqrsaxon.query.queries.GetAllAccountsQuery;
+import benakka.demoessqrsaxon.query.queries.WatchEventQuery;
 import benakka.demoessqrsaxon.query.repository.AccountRepository;
 import benakka.demoessqrsaxon.query.repository.OperationRepository;
 import org.axonframework.queryhandling.QueryHandler;
@@ -32,6 +33,11 @@ public class AccountQueryHandler {
        Account account = accountRepository.findById(query.getAccountId()).get();
         List<AccountOperation> operations = operationRepository.findByAccountId(query.getAccountId());
         return new AccountStatementResponseDTO(account, operations);
+    }
+
+    @QueryHandler
+    public AccountOperation on(WatchEventQuery query){
+       return AccountOperation.builder().build();
     }
 
 
