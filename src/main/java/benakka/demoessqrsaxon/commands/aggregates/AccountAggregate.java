@@ -2,10 +2,10 @@ package benakka.demoessqrsaxon.commands.aggregates;
 
 import benakka.demoessqrsaxon.commands.commands.AddAccountCommand;
 import benakka.demoessqrsaxon.commands.commands.CreditAccountCommand;
+import benakka.demoessqrsaxon.commands.commands.DebitAccountCommand;
+import benakka.demoessqrsaxon.commands.commands.UpdateStatusCommand;
 import benakka.demoessqrsaxon.commands.enums.AccountStatus;
-import benakka.demoessqrsaxon.events.AccountActivatedEvent;
-import benakka.demoessqrsaxon.events.AccountCreatedEvent;
-import benakka.demoessqrsaxon.events.AccountCreditedEvent;
+import benakka.demoessqrsaxon.events.*;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -40,7 +40,7 @@ public class AccountAggregate {
     }
     @EventSourcingHandler
     public void on(AccountCreatedEvent event){
-        log.info("############## AddAccountEvent Occured ##############");
+        log.info("############## AccountCreatedEvent Occured ##############");
         this.accountId = event.getAccountId();
         this.balance = event.getInitialBalance();
         this.status = event.getStatus();
@@ -67,8 +67,45 @@ public class AccountAggregate {
     }
     @EventSourcingHandler
     public void on(AccountCreditedEvent event){
-        log.info("############## AddAccountEvent Occured ##############");
+        log.info("############## AccountCreditedEvent Occured ##############");
         this.accountId = event.getAccountId();
         this.balance = this.balance + event.getAmount();
+    }
+
+
+    @CommandHandler // celle la est une fonction de decision car elle applique les regles metiers
+    public void handle(DebitAccountCommand command){
+        log.info("############## DebitAccountCommand Received ##############");
+        if (!status.equals(AccountStatus.ACTIVATED)) throw new RuntimeException("The account "+command.getId()+" is not activated");
+        if (balance<command.getAmount()) throw new RuntimeException("Balance Not sufficient Exception");
+        if (command.getAmount()<=0) throw new IllegalArgumentException("Amount must be positive");
+        AggregateLifecycle.apply(new AccountDebitedEvent( // apply : 1.Identifie les méthodes @EventSourcingHandler correspondant à son type   2.appliquer l'événement à l'Aggregate en déclenchant le handler d'événement correspondant   3.l'enregistrer à l'événement dans l'Event Store
+                command.getId(),
+                command.getAmount(),
+                command.getCurrency()
+        ));
+    }
+    @EventSourcingHandler
+    public void on(AccountDebitedEvent event){
+        log.info("############## AccountDebitedEvent Occured ##############");
+        this.accountId = event.getAccountId();
+        this.balance = this.balance - event.getAmount();
+    }
+
+
+    @CommandHandler // celle la est une fonction de decision car elle applique les regles metiers
+    public void handle(UpdateStatusCommand command){
+        log.info("############## UpdateStatusCommand Received ##############");
+        if (status.equals(command.getStatus())) throw new RuntimeException("This account "+command.getId()+" is alreeady "+command.getStatus());
+        AggregateLifecycle.apply(new AccountUpdateStatusEvent( // apply : 1.Identifie les méthodes @EventSourcingHandler correspondant à son type   2.appliquer l'événement à l'Aggregate en déclenchant le handler d'événement correspondant   3.l'enregistrer à l'événement dans l'Event Store
+                command.getId(),
+                command.getStatus()
+        ));
+    }
+    @EventSourcingHandler
+    public void on(AccountUpdateStatusEvent event){
+        log.info("############## AccountUpdateStatusEvent Occured ##############");
+        this.accountId = event.getAccountId();
+        this.status = event.getStatus();
     }
 }

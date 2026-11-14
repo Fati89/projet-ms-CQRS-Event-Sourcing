@@ -15,3 +15,6 @@
 ## Credit Account
 ![img_5.png](img_5.png)
 ![img_6.png](img_6.png)
+## Debit Account & Update Status
+![img_7.png](img_7.png)
+![img_8.png](img_8.png)
